@@ -178,7 +178,7 @@
       $('#rows').innerHTML = `<div class="empty"><b>Could not reach the market.</b><button class="btn sm" id="retry" type="button" style="margin-top:10px">Retry</button></div>`;
       $('#retry').onclick = () => loadPools(); $('#updated span').textContent = 'Offline'; return;
     }
-    renderPools(); renderStats(); renderTicker(); rcInit(); story.data(); mach.data(); tickUpdated();
+    renderPools(); renderStats(); renderTicker(); rcInit(); story.data(); mach.data(); topPayers(); tickUpdated();
   }
   setInterval(() => { if (!document.hidden && !S.busy) loadPools(true); }, 60000);
   $('#rows').addEventListener('click', e => { const r = e.target.closest('.row'); if (r) openPool(r.dataset.pool); });
@@ -357,7 +357,7 @@
     $$('#rcSol,#rcDays,#rcMove').forEach(el => el.style.setProperty('--f', ((el.value - el.min) / (el.max - el.min) * 100) + '%'));
     $('#rcSolL').textContent = V + ' SOL'; $('#rcDaysL').textContent = days + (days === 1 ? ' day' : ' days'); $('#rcMoveL').textContent = (mv > 0 ? '+' : '') + Math.round(mv * 100) + '%';
     const fees = V * p.milkPerSolDay * days, il = V * Math.sqrt(r) - V, net = fees + il, hold = V * (1 + r) / 2 - V, vs = net - hold;
-    const set = (id, n) => { const el = $(id); el.innerHTML = `${sgn(n)} SOL <small class="mut" style="font-size:13px;font-weight:600;letter-spacing:0">${usd(n)}</small>`; el.className = 'num ' + (n >= 0 ? 'up' : 'dn'); };
+    const set = (id, n) => { const el = $(id); if (bump && el.animate) el.animate([{ transform: 'scale(1.1)' }, { transform: 'none' }], { duration: 380, easing: 'cubic-bezier(.2,.75,.2,1)' }); el.innerHTML = `${sgn(n)} SOL <small class="mut" style="font-size:13px;font-weight:600;letter-spacing:0">${usd(n)}</small>`; el.className = 'num ' + (n >= 0 ? 'up' : 'dn'); };
     set('#rcFees', fees); set('#rcIl', il); set('#rcNet', net); set('#rcVs', vs);
     $('#rcPool').textContent = (p.symbol ? '$' + p.symbol : short(p.mint)) + (p.venue === 'stonkfun' ? ' · StonkFun' : ' · pump.fun') + ' · ' + pctTxt(p.milkPerSolDay) + '/day';
     if (bump) { const el = $('#rcPaper'); el.animate([{ transform: 'translateY(-6px) rotate(-.4deg)' }, { transform: 'none' }], { duration: 380, easing: 'cubic-bezier(.2,.7,.2,1)' }); }
@@ -527,6 +527,56 @@
     return { init, data, scroll };
   })();
 
+
+  /* ---------- round 3: scroll features ---------- */
+  function manifestoInit() {
+    const el = $('#mtext'); if (!el || el.dataset.sp) return; el.dataset.sp = 1;
+    const gold = new Set(['divz', 'seat,', 'paid', 'fee.']);
+    el.innerHTML = el.textContent.trim().split(/\s+/).map(w => `<span class="w${gold.has(w) ? ' g' : ''}">${esc(w)}</span>`).join(' ');
+  }
+  function manifestoScroll() {
+    const el = $('#mtext'); if (!el) return; const r = el.getBoundingClientRect();
+    if (r.top > innerHeight || r.bottom < 0) return;
+    const p = Math.max(0, Math.min(1, (innerHeight * .82 - r.top) / (r.height + innerHeight * .25)));
+    const ws = $$('.w', el), n = Math.round(p * ws.length);
+    ws.forEach((w, i) => w.classList.toggle('on', RM || i < n));
+  }
+  const HS = { shift: 0 };
+  function topPayers() {
+    const L = S.all.filter(p => p.tvlSol >= 25 && p.volSol > 0).sort((a, b) => b.milkPerSolDay - a.milkPerSolDay).slice(0, 12);
+    const tr = $('#htrack'); if (!tr) return;
+    if (!L.length) { tr.innerHTML = '<div class="empty" style="width:100%">The board is loading…</div>'; return; }
+    tr.innerHTML = L.map((p, i) => `<div class="hcard ${p.venue === 'stonkfun' ? 'ink' : ''}" data-pool="${esc(p.pool)}"><span class="rank">${String(i + 1).padStart(2, '0')}</span>
+      <div class="h">${tokImg(p, 'tok lg')}<div><b>${label(p)}</b><small class="mut">${p.venue === 'stonkfun' ? 'StonkFun' + (p.quote ? ' · with ' + esc(p.quote) : '') : 'pump.fun · with SOL'}</small></div></div>
+      <div class="big num">${pctTxt(p.milkPerSolDay)}<small>a day</small></div>
+      <div class="kv2 num"><div><span>Pool size</span><b>${compact(p.tvlSol)} SOL</b></div><div><span>24h volume</span><b>${compact(p.volSol)} SOL</b></div></div>
+      <div class="go2"><span>${p.venue === 'stonkfun' ? 'Open on Raydium' : 'Add from SOL'}</span><i>→</i></div></div>`).join('');
+    sizeTop(); onScroll();
+  }
+  function sizeTop() {
+    const sec = $('#payers'), tr = $('#htrack'); if (!sec || !tr) return;
+    if (innerWidth <= 1000) { sec.style.height = ''; HS.shift = 0; return; }
+    HS.shift = Math.max(0, tr.scrollWidth - innerWidth);
+    sec.style.height = (innerHeight + HS.shift + 80) + 'px';
+  }
+  function topScroll() {
+    const sec = $('#payers'), tr = $('#htrack'); if (!sec || !HS.shift) return;
+    const r = sec.getBoundingClientRect(); if (r.bottom < 0 || r.top > innerHeight) return;
+    const p = Math.max(0, Math.min(1, -r.top / Math.max(1, r.height - innerHeight)));
+    tr.style.transform = `translate3d(${(-p * HS.shift).toFixed(1)}px,0,0)`; $('#hprog').style.transform = `scaleX(${p.toFixed(3)})`;
+  }
+  $('#htrack').addEventListener('click', e => { const c = e.target.closest('.hcard'); if (c) openPool(c.dataset.pool); });
+  const DOTS = [['Top', null], ['Why divz', 'why'], ['Launchpads', 'venues'], ['Top payers', 'payers'], ['How it works', 'how'], ['Pools', 'pools'], ['Receipt', 'receipt'], ['One click', 'click'], ['Positions', 'positions'], ['FAQ', 'faq']];
+  function dotsInit() {
+    const nav = $('#sdots'); nav.innerHTML = DOTS.map(([t, id]) => `<a href="${id ? '#' + id : '#'}" data-id="${id || ''}"><span>${t}</span></a>`).join('');
+    nav.addEventListener('click', e => { const a = e.target.closest('a'); if (!a) return; e.preventDefault(); const id = a.dataset.id; if (!id) scrollTo({ top: 0, behavior: 'smooth' }); else document.getElementById(id).scrollIntoView({ behavior: 'smooth' }); });
+  }
+  function dotsScroll() {
+    const nav = $('#sdots'); nav.classList.toggle('on', scrollY > 400);
+    let cur = ''; for (const [, id] of DOTS) { if (!id) continue; const el = document.getElementById(id); if (el && el.getBoundingClientRect().top < innerHeight * .4) cur = id; }
+    $$('a', nav).forEach(a => a.classList.toggle('on', a.dataset.id === cur));
+  }
+
   /* ---------- end card ---------- */
   function endCard() { $('#esvg').innerHTML = `<style>@keyframes bob{50%{transform:translateY(-10px)}}.eb{animation:bob 3s ease-in-out infinite}.eb2{animation:bob 3s ease-in-out .4s infinite}</style><path d="M40,150 A110,110 0 0 0 260,150 Z" fill="#F2EEE3"/><circle class="eb" cx="150" cy="96" r="38" fill="url(#gold)"/><circle class="eb2" cx="150" cy="30" r="16" fill="url(#gold)"/>`; }
 
@@ -541,12 +591,12 @@
     if (a) { ink.style.opacity = 1; ink.style.width = a.offsetWidth + 'px'; ink.style.transform = `translateX(${a.offsetLeft}px)`; } else ink.style.opacity = 0;
   }
   let sq = false;
-  function onScroll() { if (sq) return; sq = true; requestAnimationFrame(() => { sq = false; const y = scrollY, H = document.documentElement.scrollHeight - innerHeight; $('#sprog').style.setProperty('--p', H > 0 ? (y / H).toFixed(4) : 0); $('#totop').classList.toggle('on', y > 900); $('#top').classList.toggle('scrolled', y > 10); story.scroll(); spy(); }); }
+  function onScroll() { if (sq) return; sq = true; requestAnimationFrame(() => { sq = false; const y = scrollY, H = document.documentElement.scrollHeight - innerHeight; $('#sprog').style.setProperty('--p', H > 0 ? (y / H).toFixed(4) : 0); $('#totop').classList.toggle('on', y > 900); $('#top').classList.toggle('scrolled', y > 10); story.scroll(); spy(); if (!RM) document.documentElement.style.setProperty('--hp', Math.min(1, y / 700).toFixed(3)); manifestoScroll(); topScroll(); dotsScroll(); }); }
 
   /* ---------- boot ---------- */
   async function boot() {
-    intro(); mach.init(); story.init(); ocInit(); faqInit(); endCard(); splitWords(); reveals(); renderPositions();
-    addEventListener('scroll', onScroll, { passive: true }); addEventListener('resize', onScroll); onScroll();
+    manifestoInit(); dotsInit(); intro(); mach.init(); story.init(); ocInit(); faqInit(); endCard(); splitWords(); reveals(); renderPositions();
+    addEventListener('scroll', onScroll, { passive: true }); addEventListener('resize', () => { sizeTop(); onScroll(); }); onScroll();
     $('#totop').onclick = () => scrollTo({ top: 0, behavior: 'smooth' });
     try { const c = await api('config'); S.cfg = c; if (c.feeBps) $('#faqCost').textContent = `A ${(c.feeBps / 100).toFixed(1)}% service fee on what you add, the Solana network fee, and the pool's normal trading fee on the part that gets swapped. Withdrawing is free apart from network fees.`; else $('#faqCost').textContent = 'DIVZ takes no fee. You pay the Solana network fee and the pool\'s normal trading fee on the part that gets swapped. Withdrawing is free apart from network fees.';
       if (c.ca) { $('#tright').insertAdjacentHTML('afterbegin', `<span class="ca">CA <b>${short(c.ca)}</b><button type="button" id="caCopy">COPY</button></span>`); $('#caCopy').onclick = () => navigator.clipboard.writeText(c.ca).then(() => toast('Contract address copied')); }
