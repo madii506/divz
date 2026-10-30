@@ -9,6 +9,7 @@
  * Routes
  *   GET  /api/config                       public settings (jug wallet, fee, CA)
  *   GET  /api/pools                        canonical pump.fun SOL pools, ranked by divs (LP fees) per day
+ *   GET  /api/stonk                        graduated StonkFun coins' Raydium pools, with their real 24h fee APR
  *   GET  /api/pool?id=<pool|mint>&user=    one pool (+ the user's balances and position)
  *   GET  /api/positions?user=              every PumpSwap LP position the wallet holds
  *   POST /api/tx                           build + simulate: {kind:'add'|'add2'|'remove', ...}
@@ -564,6 +565,48 @@ async function positions(userStr) {
   return { positions: out, solUsd };
 }
 
+
+/* ---------------- StonkFun: graduated coins trade on Raydium; read their pools' real fee APR ---------------- */
+const SF_API = 'https://www.stonkfun.xyz/api/public/v1/tokens';
+const RAY = 'https://api-v3.raydium.io/';
+async function solUsdNow() {
+  try { const p = await pools(); if (p.solUsd) return p.solUsd; } catch (e) { }
+  try { const j = await getJson('https://lite-api.jup.ag/price/v3?ids=So11111111111111111111111111111111111111112'); const v = j['So11111111111111111111111111111111111111112']; if (v && v.usdPrice) return v.usdPrice; } catch (e) { }
+  return 0;
+}
+async function stonkPools() {
+  return cached('stonk', 120000, async () => {
+    const lists = await Promise.allSettled([getJson(SF_API + '?sort=volume&pageSize=100', 9000), getJson(SF_API + '?sort=marketCap&pageSize=60', 9000)]);
+    const toks = new Map(); let total = null;
+    for (const l of lists) if (l.status === 'fulfilled') { const d = l.value.data || l.value; if (d.pagination && d.pagination.total) total = d.pagination.total; for (const t of d.tokens || []) if (t.status === 'graduated' && !toks.has(t.mint)) toks.set(t.mint, t); }
+    const list = [...toks.values()].sort((a, b) => ((b.market || {}).volume24hUsd || 0) - ((a.market || {}).volume24hUsd || 0)).slice(0, 60);
+    const solUsd = await solUsdNow();
+    const out = [];
+    for (let i = 0; i < list.length; i += 8) {
+      await Promise.all(list.slice(i, i + 8).map(async t => {
+        try {
+          const j = await getJson(RAY + 'pools/info/mint?mint1=' + t.mint + '&poolType=all&poolSortField=liquidity&sortType=desc&pageSize=5&page=1', 7000);
+          const ps = ((j.data && j.data.data) || []).filter(p => p && p.tvl >= 1000 && p.day);
+          const qm = t.quote && t.quote.mint;
+          const p = ps.find(x => qm && (x.mintA.address === qm || x.mintB.address === qm)) || ps[0];
+          if (!p) return;
+          const vol = p.day.volume || 0, apr = p.day.feeApr || 0, m = t.market || {};
+          out.push({
+            venue: 'stonkfun', pool: p.id, mint: t.mint, name: t.name || t.symbol, symbol: t.symbol, image: t.imageUrl ? (t.imageUrl.startsWith('http') ? t.imageUrl : 'https://www.stonkfun.xyz' + t.imageUrl) : '',
+            quote: t.quote ? t.quote.symbol : '', pair: (p.mintA.symbol || '?') + '/' + (p.mintB.symbol || '?'), poolType: p.type, feeRate: p.feeRate,
+            tvlUsd: p.tvl, volUsd: vol, tvlSol: solUsd ? p.tvl / solUsd : 0, volSol: solUsd ? vol / solUsd : 0,
+            milkPerSolDay: apr / 100 / 365, apr: apr / 100, lpBps: vol > 0 ? Math.round(apr / 100 / 365 * p.tvl / vol * 1e4 * 10) / 10 : Math.round((p.feeRate || 0) * 1e4),
+            mcapSol: solUsd && m.marketCapUsd ? m.marketCapUsd / solUsd : 0, change24: m.priceChange24h || 0, created: t.createdAt ? Date.parse(t.createdAt) : null,
+            addUrl: 'https://raydium.io/liquidity/increase/?mode=add&pool_id=' + p.id, sfUrl: 'https://www.stonkfun.xyz/token/' + t.mint,
+          });
+        } catch (e) { }
+      }));
+    }
+    out.sort((a, b) => b.milkPerSolDay - a.milkPerSolDay);
+    return { solUsd, count: out.length, checked: list.length, sfTotal: total, updated: Date.now(), pools: out };
+  });
+}
+
 /* ---------------- router ---------------- */
 module.exports = async (req, res) => {
   if (req.method === 'OPTIONS') return send(res, 204, {});
@@ -573,6 +616,7 @@ module.exports = async (req, res) => {
   try {
     if (path === 'config') return send(res, 200, { ok: true, jug: CONFIG.jug, feeBps: CONFIG.jug ? CONFIG.feeBps : 0, ca: CONFIG.ca, x: CONFIG.x, rpc: E('RPC_URL') ? 'private' : 'public' }, 'public, s-maxage=60');
     if (path === 'pools') return send(res, 200, { ok: true, ...(await pools()) }, 'public, s-maxage=60, stale-while-revalidate=240');
+    if (path === 'stonk') return send(res, 200, { ok: true, ...(await stonkPools()) }, 'public, s-maxage=90, stale-while-revalidate=300');
     if (path === 'pool') return send(res, 200, { ok: true, pool: await poolOne(q.get('id'), q.get('user')) }, q.get('user') ? 'no-store' : 'public, s-maxage=10');
     if (path === 'positions') return send(res, 200, { ok: true, ...(await positions(q.get('user'))) });
     if (path === 'jug') {
