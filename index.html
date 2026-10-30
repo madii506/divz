@@ -16,7 +16,7 @@
 <link rel="icon" type="image/png" sizes="64x64" href="/img/favicon-64.png">
 <link rel="apple-touch-icon" href="/img/favicon.png">
 <link rel="preload" href="/fonts/sora-latin-800-normal.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="/css/divz.css?v=2">
+<link rel="stylesheet" href="/css/divz.css?v=3">
 </head>
 <body class="locked">
 <div id="sprog"></div><div class="paper" aria-hidden="true"></div>
@@ -59,6 +59,8 @@
   </section>
 
 
+  <section class="manifesto" id="why"><div class="wrap"><div class="eyebrow">Why divz</div><p class="mtext" id="mtext">Every trade on every pool pays a fee. Part of it never leaves the pool: it goes to whoever supplies the liquidity. Holders wait for the chart. Liquidity gets paid by it, up or down. divz puts you in that seat, on any coin.</p></div></section>
+
   <section class="wrap sec reveal" id="venues">
     <div class="hd"><div><div class="eyebrow">Two launchpads, one board</div><h2>Every pool on pump.fun<br>and StonkFun.</h2><p>DIVZ scans both, live. pump.fun coins graduate into PumpSwap pools paired with SOL. StonkFun coins graduate into Raydium pools paired with the stock or asset they launched on.</p></div></div>
     <div class="vgrid stg">
@@ -66,6 +68,12 @@
       <div class="card venue" id="vStonk"><div class="vh"><span class="vtag dark">StonkFun</span><span class="mut">Raydium pools · paired with stocks and assets</span></div><div class="vstats num"><div><b data-k="n">—</b><span>pools</span></div><div><b data-k="vol">—</b><span>24h volume</span></div><div><b data-k="fees">—</b><span>to liquidity, 24h</span></div></div><div class="vtop"></div><div class="vfoot"><span class="mut">Add on Raydium with the same wallet</span><button class="btn sm" type="button" data-venue="stonkfun">See StonkFun pools</button></div></div>
     </div>
   </section>
+
+  <section class="hscroll" id="payers"><div class="hpin">
+    <div class="wrap hhead"><div><div class="eyebrow">Paying the most right now</div><h2 class="hh">Top payers, live.</h2></div><p class="mut">Scroll to slide through the pools that paid their liquidity the most in the last 24 hours, from both launchpads.</p></div>
+    <div class="htrack" id="htrack"></div>
+    <div class="wrap"><div class="hbar"><i id="hprog"></i></div></div>
+  </div></section>
 
   <section class="story" id="how">
     <div class="pin"><div class="wrap sgrid">
@@ -122,7 +130,7 @@
     </div>
   </section>
 
-  <section class="wrap sec reveal" id="click">
+  <section class="band-ink" id="click"><div class="wrap sec reveal">
     <div class="hd"><div><div class="eyebrow">One click</div><h2>What one click does.</h2><p>Adding from SOL takes several steps. DIVZ packs them into one transaction, simulates it on the live chain, and hands it to your wallet to sign.</p></div></div>
     <div class="oc stg">
       <div class="card"><h3>Every step, in one transaction</h3>
@@ -141,7 +149,7 @@
         <div class="badges"><span class="badge">Simulated before you sign</span><span class="badge">One transaction</span><span class="badge">LP tokens in your wallet</span><span class="badge">Withdraw any time</span></div>
       </div>
     </div>
-  </section>
+  </div></section>
 
   <section class="wrap sec reveal" id="positions">
     <div class="hd"><div><div class="eyebrow">Your positions</div><h2>Your divs, in one place.</h2><p>Every PumpSwap pool your wallet is in, what it's worth and what it earns a day. Positions added on pump.fun show up too.</p></div><button class="btn sm ghost" id="refreshPos" type="button" hidden>Refresh</button></div>
@@ -171,8 +179,9 @@
 <div id="veil" hidden></div>
 <aside id="drawer" aria-hidden="true"><button id="dClose" type="button" aria-label="Close">×</button><div id="dIn"></div></aside>
 <div class="modal" id="wModal" hidden><div class="card"><button id="wClose" type="button" aria-label="Close">×</button><h3>Connect a wallet</h3><div id="wList"></div></div></div>
+<nav class="sdots" id="sdots" aria-label="Sections"></nav>
 <div id="toast"></div>
 <button id="totop" aria-label="Back to top"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#141414" stroke-width="2.4" stroke-linecap="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
-<script src="/js/divz.js?v=2"></script>
+<script src="/js/divz.js?v=3"></script>
 </body>
 </html>
