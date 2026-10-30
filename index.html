@@ -11,11 +11,12 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://divz-six.vercel.app/img/og.jpg">
 <meta name="theme-color" content="#F2EEE3">
+<link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" type="image/png" sizes="32x32" href="/img/favicon-32.png">
 <link rel="icon" type="image/png" sizes="64x64" href="/img/favicon-64.png">
 <link rel="apple-touch-icon" href="/img/favicon.png">
 <link rel="preload" href="/fonts/sora-latin-800-normal.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="/css/divz.css?v=1">
+<link rel="stylesheet" href="/css/divz.css?v=2">
 </head>
 <body class="locked">
 <div id="sprog"></div><div class="paper" aria-hidden="true"></div>
@@ -33,6 +34,7 @@
 </header>
 
 <main>
+  <div class="floaters" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
   <section class="wrap hero">
     <div class="hl">
       <h1>Make any coin<br>pay <em>divs.</em></h1>
@@ -41,8 +43,7 @@
       <form class="find" id="find"><label><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7a746a" stroke-width="2.2"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input id="findIn" placeholder="Paste a pump.fun coin address" autocomplete="off" spellcheck="false"></label><button class="btn" type="submit">Open pool</button></form>
     </div>
     <div class="hr">
-      <div class="machine"><svg id="msvg" viewBox="0 0 560 360"></svg></div>
-      <div class="card top-pool" id="topPool"><div class="skel" style="height:150px"></div></div>
+      <div class="machine"><svg id="msvg" viewBox="0 0 560 470"></svg><div class="mscan" id="mscan"><span class="live"><span>Scanning pump.fun + StonkFun</span></span></div></div>
     </div>
   </section>
 
@@ -50,10 +51,19 @@
 
   <section class="wrap">
     <div class="card stats" id="stats">
-      <div><b data-k="n">—</b><span>Pools paying divs right now</span></div>
+      <div><b data-k="n">—</b><span>Pools scanned · pump.fun + StonkFun</span></div>
       <div><b data-k="vol">—</b><span>24h volume across them</span></div>
       <div><b data-k="fees">—</b><span>Paid to liquidity, last 24h</span></div>
-      <div><b data-k="top">—</b><span>Best daily rate on the board</span></div>
+      <div><b data-k="top">—</b><span>Best daily rate, 25+ SOL pools</span></div>
+    </div>
+  </section>
+
+
+  <section class="wrap sec reveal" id="venues">
+    <div class="hd"><div><div class="eyebrow">Two launchpads, one board</div><h2>Every pool on pump.fun<br>and StonkFun.</h2><p>DIVZ scans both, live. pump.fun coins graduate into PumpSwap pools paired with SOL. StonkFun coins graduate into Raydium pools paired with the stock or asset they launched on.</p></div></div>
+    <div class="vgrid stg">
+      <div class="card venue" id="vPump"><div class="vh"><span class="vtag">pump.fun</span><span class="mut">PumpSwap pools · paired with SOL</span></div><div class="vstats num"><div><b data-k="n">—</b><span>pools</span></div><div><b data-k="vol">—</b><span>24h volume</span></div><div><b data-k="fees">—</b><span>to liquidity, 24h</span></div></div><div class="vtop"></div><div class="vfoot"><span class="mut">One-click add from SOL on DIVZ</span><button class="btn sm" type="button" data-venue="pump">See pump.fun pools</button></div></div>
+      <div class="card venue" id="vStonk"><div class="vh"><span class="vtag dark">StonkFun</span><span class="mut">Raydium pools · paired with stocks and assets</span></div><div class="vstats num"><div><b data-k="n">—</b><span>pools</span></div><div><b data-k="vol">—</b><span>24h volume</span></div><div><b data-k="fees">—</b><span>to liquidity, 24h</span></div></div><div class="vtop"></div><div class="vfoot"><span class="mut">Add on Raydium with the same wallet</span><button class="btn sm" type="button" data-venue="stonkfun">See StonkFun pools</button></div></div>
     </div>
   </section>
 
@@ -75,16 +85,17 @@
   </section>
 
   <section class="wrap sec reveal" id="pools">
-    <div class="hd"><div><div class="eyebrow">The board</div><h2>Every pool that pays.</h2><p>Live pump.fun pools on PumpSwap, ranked by what they paid their liquidity over the last 24 hours. Pick one and add from SOL in one click.</p></div><span class="live" id="updated"><span>Loading…</span></span></div>
+    <div class="hd"><div><div class="eyebrow">The board</div><h2>Every pool that pays.</h2><p>Live pump.fun and StonkFun pools, ranked by what they paid their liquidity over the last 24 hours. pump.fun pools add from SOL in one click right here.</p></div><span class="live" id="updated"><span>Loading…</span></span></div>
     <div class="tools">
       <label class="search"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7a746a" stroke-width="2.2"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input id="q" placeholder="Filter by name, ticker or address" autocomplete="off"><kbd>/</kbd></label>
+      <div class="chips" id="venue" style="margin:0"><button class="chip on" data-v="all">All</button><button class="chip" data-v="pump">pump.fun</button><button class="chip" data-v="stonkfun">StonkFun</button></div>
       <div class="chips" id="size" style="margin:0"><button class="chip" data-m="0">All sizes</button><button class="chip on" data-m="25">25+ SOL</button><button class="chip" data-m="100">100+ SOL</button><button class="chip" data-m="500">500+ SOL</button></div>
     </div>
     <div class="card board">
       <div class="tr th" id="th"><span>Pool</span><button class="sort on" data-s="milk">Divs / day</button><button class="sort" data-s="tvl">Pool size</button><button class="sort" data-s="vol">24h volume</button><button class="sort" data-s="fee">LP fee</button><button class="sort" data-s="chg">24h</button><span></span></div>
       <div id="rows"></div>
     </div>
-    <div class="updated"><span>Divs / day = the LP fees a pool kept in the last 24h, as a share of its size. Past pace, not a promise.</span></div>
+    <div class="updated"><span>Divs / day = the fees a pool paid its liquidity in the last 24h, as a share of its size. Past pace, not a promise. StonkFun rates come from Raydium's 24h fee APR.</span></div>
   </section>
 
   <section class="wrap sec reveal" id="receipt">
@@ -144,7 +155,7 @@
       <details class="card"><summary>Can I lose money?</summary><p>Yes. Your position holds both SOL and the coin. If the coin's price falls, your position falls with it, partly offset by fees. If the coin goes to zero, so does the coin half. The receipt shows this at full size before you add.</p></details>
       <details class="card"><summary>Does DIVZ hold my funds?</summary><p>No. DIVZ builds and simulates the transaction; your wallet signs it. The LP tokens go straight to your wallet, and you can withdraw on DIVZ, on pump.fun or anywhere PumpSwap works.</p></details>
       <details class="card"><summary>What does it cost?</summary><p id="faqCost">The Solana network fee and the pool's normal trading fee on the part that gets swapped. Withdrawing is free apart from network fees.</p></details>
-      <details class="card"><summary>Which pools can I add to?</summary><p>Any pump.fun coin that has graduated to its PumpSwap pool paired with SOL. Coins still on the bonding curve have no pool yet. Paste any coin address in the search to look it up on-chain.</p></details>
+      <details class="card"><summary>Which pools can I add to?</summary><p>On pump.fun, any coin that graduated to its PumpSwap pool paired with SOL: add from SOL in one click here. On StonkFun, graduated coins trade in Raydium pools paired with their stock or asset: DIVZ shows their live rates and sends you to Raydium to add. Coins still on a bonding curve have no pool yet.</p></details>
       <details class="card"><summary>Why do some pools pay more?</summary><p>Divs depend on how much trades through the pool compared with how big it is. A busy, small pool pays a higher rate. Pools above about 420 SOL market cap keep a bigger share of each fee for liquidity.</p></details>
       <details class="card"><summary>Are the daily rates guaranteed?</summary><p>No. They are the last 24 hours of real trading. Volume changes every day, and fees fall when trading slows.</p></details>
       <details class="card"><summary>How do I take my money out?</summary><p>Open the pool, choose Withdraw, pick how much, and get it back as SOL or as SOL plus the coin. It's one transaction your wallet signs.</p></details>
@@ -162,6 +173,6 @@
 <div class="modal" id="wModal" hidden><div class="card"><button id="wClose" type="button" aria-label="Close">×</button><h3>Connect a wallet</h3><div id="wList"></div></div></div>
 <div id="toast"></div>
 <button id="totop" aria-label="Back to top"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#141414" stroke-width="2.4" stroke-linecap="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
-<script src="/js/divz.js?v=1"></script>
+<script src="/js/divz.js?v=2"></script>
 </body>
 </html>
