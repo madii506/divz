@@ -326,3 +326,47 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;bac
 }
 @media (max-width:620px){.wrap{padding:0 16px}.ca{display:none}.find{flex-direction:column}.tp-row{grid-template-columns:1fr 1fr}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.hl>*,.reveal,.stg>*,.sec h2 .wd>span{opacity:1!important;transform:none!important}}
+
+/* ---------- round 2: venues, scan, floaters ---------- */
+.hero{position:relative}
+.machine{min-height:420px}
+.mscan{position:absolute;left:18px;bottom:16px;padding:8px 12px;border-radius:12px;background:rgba(20,20,20,.75);border:1px solid #333;backdrop-filter:blur(6px)}
+.mscan .live{color:#d8d1c2}
+.floaters{position:absolute;left:0;right:0;top:70px;height:760px;pointer-events:none;overflow:hidden;z-index:-1}
+.floaters i{position:absolute;border-radius:50%;background:radial-gradient(circle at 35% 30%,#FBE7A1,#E2B341 60%,#C98A0B);box-shadow:0 10px 24px -10px rgba(201,138,11,.6);animation:float 9s ease-in-out infinite}
+.floaters i:nth-child(1){width:22px;height:22px;left:4%;top:20%;animation-delay:-1s}
+.floaters i:nth-child(2){width:14px;height:14px;left:40%;top:8%;animation-delay:-3s;animation-duration:11s}
+.floaters i:nth-child(3){width:30px;height:30px;left:46%;top:78%;animation-delay:-5s}
+.floaters i:nth-child(4){width:12px;height:12px;left:92%;top:14%;animation-delay:-2s;animation-duration:7s}
+.floaters i:nth-child(5){width:18px;height:18px;left:2%;top:70%;animation-delay:-6s;animation-duration:12s}
+.floaters i:nth-child(6){width:10px;height:10px;left:30%;top:90%;animation-delay:-4s}
+.floaters i:nth-child(7){width:16px;height:16px;left:96%;top:62%;animation-delay:-7s;animation-duration:10s}
+@keyframes float{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-26px) rotate(25deg)}}
+.vgrid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.venue{padding:24px;display:flex;flex-direction:column;gap:16px;transition:transform .3s,box-shadow .3s}
+.venue:hover{transform:translateY(-4px);box-shadow:0 30px 50px -30px rgba(60,45,10,.5)}
+.vh{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.vtag{display:inline-flex;align-items:center;height:34px;padding:0 14px;border-radius:999px;background:var(--gold);font-weight:800;font-size:15px;letter-spacing:-.02em}
+.vtag.dark{background:var(--ink);color:var(--bg)}
+.vstats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.vstats div{padding:12px 14px;border-radius:14px;background:var(--paper);border:1.5px solid var(--line)}
+.vstats b{display:block;font-size:24px;font-weight:800;letter-spacing:-.04em}
+.vstats b small{font-size:12px;color:var(--mut);margin-left:3px;letter-spacing:0}
+.vstats span{font-size:12px;color:var(--mut);font-weight:600}
+.vtop{display:flex;flex-direction:column;gap:8px;min-height:150px}
+.vrow{display:grid;grid-template-columns:30px 1fr 1.2fr 70px;gap:10px;align-items:center;font-size:13.5px;cursor:pointer;padding:6px 8px;border-radius:12px;transition:background .2s}
+.vrow:hover{background:#fff6dc}
+.vrow .tok{width:30px;height:30px;font-size:12px}
+.vrow b{font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vrow .mbar{margin:0}
+.vrow em{font-style:normal;font-weight:800;text-align:right}
+.vrow .mbar i{transform-origin:0 50%;transform:scaleX(0);transition:transform 1.1s cubic-bezier(.2,.75,.2,1)}
+.shown .vrow .mbar i{transform:scaleX(1)}
+.vfoot{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:auto;padding-top:14px;border-top:1.5px dashed var(--line);flex-wrap:wrap;font-size:13px}
+.vb{display:inline-flex;align-items:center;height:20px;padding:0 7px;border-radius:6px;font-size:10.5px;font-weight:800;letter-spacing:.02em;margin-left:6px;vertical-align:2px;background:var(--gold);color:var(--ink)}
+.vb.s{background:var(--ink);color:var(--bg)}
+.ti .vb{margin:0}
+.sf-note{padding:14px;border-radius:14px;background:var(--paper);border:1.5px dashed var(--line2);font-size:13.5px;color:var(--ink2);margin:14px 0}
+@media (max-width:1000px){.vgrid{grid-template-columns:1fr}.machine{min-height:0}.floaters{display:none}}
+.vgrid>*{min-width:0}.vstats>div{min-width:0}
+@media (max-width:620px){.venue{padding:16px}.vstats b{font-size:18px}.vrow{grid-template-columns:26px 1fr 60px}.vrow .mbar{display:none}}
