@@ -1,0 +1,13 @@
+{
+  "name": "divz",
+  "private": true,
+  "description": "Make any coin pay divs. Add liquidity to any pump.fun PumpSwap pool from SOL, your wallet signs.",
+  "engines": { "node": "22.x" },
+  "dependencies": {
+    "@pump-fun/pump-swap-sdk": "1.20.0",
+    "@solana/spl-token": "^0.4.13",
+    "@solana/web3.js": "^1.98.2",
+    "bn.js": "^5.2.2"
+  },
+  "overrides": { "rpc-websockets": { "uuid": "^11.1.0" } }
+}

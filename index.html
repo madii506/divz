@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>DIVZ</title>
+<meta name="description" content="Make any coin pay divs. Add liquidity to any pump.fun pool from SOL, earn real fees on every trade, losses shown at full size. Your keys, your position.">
+<meta property="og:title" content="divz · make any coin pay divs">
+<meta property="og:description" content="Add liquidity to any pump.fun pool from SOL and earn a cut of every trade. Fees and losses at full size. Your keys, your position.">
+<meta property="og:image" content="https://divz.vercel.app/img/og.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://divz.vercel.app/img/og.jpg">
+<meta name="theme-color" content="#F2EEE3">
+<link rel="icon" type="image/png" sizes="32x32" href="/img/favicon-32.png">
+<link rel="icon" type="image/png" sizes="64x64" href="/img/favicon-64.png">
+<link rel="apple-touch-icon" href="/img/favicon.png">
+<link rel="preload" href="/fonts/sora-latin-800-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/css/divz.css?v=1">
+</head>
+<body class="locked">
+<div id="sprog"></div><div class="paper" aria-hidden="true"></div>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <symbol id="mark" viewBox="0 0 120 136"><path d="M4,74 A56,56 0 0 0 116,74 Z" fill="#141414"/><circle cx="60" cy="44" r="21" fill="#E8B23A"/><circle cx="60" cy="9" r="8.5" fill="#E8B23A"/></symbol>
+  <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FBE7A1"/><stop offset="1" stop-color="#E2B341"/></linearGradient>
+</defs></svg>
+
+<div id="intro" aria-hidden="true"><svg id="isvg" viewBox="0 0 560 420"></svg><button id="skip" aria-label="Skip intro"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 5l7 7-7 7M13 5l7 7-7 7"/></svg></button></div>
+
+<header class="top" id="top">
+  <a class="logo" href="#"><svg><use href="#mark"/></svg>divz</a>
+  <nav class="nav" id="nav"><a href="#pools">Pools</a><a href="#how">How it works</a><a href="#receipt">Receipt</a><a href="#positions">Positions</a><a href="#faq">FAQ</a></nav>
+  <div class="tright" id="tright"><button class="btn sm wbtn" id="walletBtn" type="button"><span id="walletLabel">Connect wallet</span></button></div>
+</header>
+
+<main>
+  <section class="wrap hero">
+    <div class="hl">
+      <h1>Make any coin<br>pay <em>divs.</em></h1>
+      <p class="lead">Add liquidity to any pump.fun pool from SOL and earn a cut of <b>every trade</b>. Fees and losses shown at full size. <b>Your keys, your position.</b></p>
+      <div class="cta"><a class="btn gold" href="#pools">Find a pool →</a><a class="btn ghost" href="#how">How it works</a></div>
+      <form class="find" id="find"><label><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7a746a" stroke-width="2.2"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input id="findIn" placeholder="Paste a pump.fun coin address" autocomplete="off" spellcheck="false"></label><button class="btn" type="submit">Open pool</button></form>
+    </div>
+    <div class="hr">
+      <div class="machine"><svg id="msvg" viewBox="0 0 560 360"></svg></div>
+      <div class="card top-pool" id="topPool"><div class="skel" style="height:150px"></div></div>
+    </div>
+  </section>
+
+  <div class="ticker" aria-label="Live pools"><div class="tt" id="tickerT"></div></div>
+
+  <section class="wrap">
+    <div class="card stats" id="stats">
+      <div><b data-k="n">—</b><span>Pools paying divs right now</span></div>
+      <div><b data-k="vol">—</b><span>24h volume across them</span></div>
+      <div><b data-k="fees">—</b><span>Paid to liquidity, last 24h</span></div>
+      <div><b data-k="top">—</b><span>Best daily rate on the board</span></div>
+    </div>
+  </section>
+
+  <section class="story" id="how">
+    <div class="pin"><div class="wrap sgrid">
+      <div>
+        <div class="eyebrow">How it works</div>
+        <h2 style="font-size:clamp(32px,4vw,52px);margin-top:12px">Where your divs<br>come from.</h2>
+        <ol class="beats" id="beats">
+          <li><i>01</i><div><b>Someone trades</b><span>Every buy and sell on a pump.fun pool pays a small fee on top.</span></div></li>
+          <li><i>02</i><div><b>The pool keeps a cut</b><span id="bCut">Part of that fee stays inside the pool for the people who supply its liquidity.</span></div></li>
+          <li><i>03</i><div><b>Your share is your divs</b><span>Own 1% of the pool and you own 1% of every fee it keeps, trade after trade.</span></div></li>
+          <li><i>04</i><div><b>Take it out any time</b><span>Withdraw to SOL whenever you want. Your position sits in your own wallet the whole time.</span></div></li>
+        </ol>
+        <div class="rail"><i id="rail"></i></div>
+      </div>
+      <div class="stage"><svg id="ssvg" viewBox="0 0 640 480"></svg></div>
+    </div></div>
+  </section>
+
+  <section class="wrap sec reveal" id="pools">
+    <div class="hd"><div><div class="eyebrow">The board</div><h2>Every pool that pays.</h2><p>Live pump.fun pools on PumpSwap, ranked by what they paid their liquidity over the last 24 hours. Pick one and add from SOL in one click.</p></div><span class="live" id="updated"><span>Loading…</span></span></div>
+    <div class="tools">
+      <label class="search"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7a746a" stroke-width="2.2"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input id="q" placeholder="Filter by name, ticker or address" autocomplete="off"><kbd>/</kbd></label>
+      <div class="chips" id="size" style="margin:0"><button class="chip" data-m="0">All sizes</button><button class="chip on" data-m="25">25+ SOL</button><button class="chip" data-m="100">100+ SOL</button><button class="chip" data-m="500">500+ SOL</button></div>
+    </div>
+    <div class="card board">
+      <div class="tr th" id="th"><span>Pool</span><button class="sort on" data-s="milk">Divs / day</button><button class="sort" data-s="tvl">Pool size</button><button class="sort" data-s="vol">24h volume</button><button class="sort" data-s="fee">LP fee</button><button class="sort" data-s="chg">24h</button><span></span></div>
+      <div id="rows"></div>
+    </div>
+    <div class="updated"><span>Divs / day = the LP fees a pool kept in the last 24h, as a share of its size. Past pace, not a promise.</span></div>
+  </section>
+
+  <section class="wrap sec reveal" id="receipt">
+    <div class="hd"><div><div class="eyebrow">The receipt</div><h2>Fees and losses,<br>same size print.</h2><p>Pick a pool, set what you put in, how long you stay and where the price goes. The receipt shows what the fees add, what the price move takes, and how it compares with just holding.</p></div></div>
+    <div class="card rcpt">
+      <div class="rc-l">
+        <div class="pick" id="rcPick"></div>
+        <div class="sl"><label><span>You put in</span><b class="num" id="rcSolL">1 SOL</b></label><input type="range" id="rcSol" min="0" max="100" value="40"></div>
+        <div class="sl"><label><span>You stay</span><b class="num" id="rcDaysL">7 days</b></label><input type="range" id="rcDays" min="1" max="90" value="7"></div>
+        <div class="sl"><label><span>The coin's price moves</span><b class="num" id="rcMoveL">0%</b></label><input type="range" id="rcMove" min="-90" max="300" value="0"></div>
+        <div class="ilc"><svg id="rcCurve" viewBox="0 0 520 210"></svg></div>
+      </div>
+      <div class="rc-r">
+        <div class="paper-rc" id="rcPaper">
+          <div class="rc-head"><span>divz receipt</span><span id="rcPool">—</span></div>
+          <div class="line"><span>Fees earned</span><b class="num up" id="rcFees">—</b></div>
+          <div class="line"><span>Price move on your coins</span><b class="num" id="rcIl">—</b></div>
+          <div class="line tot"><span>Net</span><b class="num" id="rcNet">—</b></div>
+          <div class="line vs"><span>vs simply holding</span><b class="num" id="rcVs">—</b></div>
+        </div>
+        <p class="fine" id="rcNote">Fees use the pool's last 24h pace, which changes every day. The price move is the constant-product math every PumpSwap pool runs on.</p>
+        <div class="cta" style="margin-top:18px"><button class="btn gold" id="rcGo" type="button">Add to this pool</button></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="wrap sec reveal" id="click">
+    <div class="hd"><div><div class="eyebrow">One click</div><h2>What one click does.</h2><p>Adding from SOL takes several steps. DIVZ packs them into one transaction, simulates it on the live chain, and hands it to your wallet to sign.</p></div></div>
+    <div class="oc stg">
+      <div class="card"><h3>Every step, in one transaction</h3>
+        <ul class="steps" id="ocSteps">
+          <li class="on" data-i="0"><div>Wrap your SOL<small>A temporary wrapped-SOL account in your wallet.</small></div><span class="pill">Token</span></li>
+          <li data-i="1"><div>Buy about half in the coin<small>An exact swap on the same pool, sized so both sides match.</small></div><span class="pill">PumpSwap</span></li>
+          <li data-i="2"><div>Deposit both sides<small>SOL and coin go into the pool at its current price.</small></div><span class="pill">PumpSwap</span></li>
+          <li data-i="3"><div>LP tokens to your wallet<small>Your receipt for your share of the pool.</small></div><span class="pill">Token-2022</span></li>
+          <li data-i="4"><div>Leftover SOL back<small>The wrapped account closes and the rest returns to you.</small></div><span class="pill">Token</span></li>
+        </ul>
+        <div class="det" id="ocDet"></div>
+      </div>
+      <div class="card"><h3>Your keys, your position</h3>
+        <p>DIVZ never holds your SOL, your coins or your keys. The server only builds and simulates the transaction. Your wallet signs it, and the LP tokens land in your own wallet, where they work anywhere PumpSwap does, including pump.fun.</p>
+        <p>If the price moves more than your limit before it lands, the whole transaction fails and nothing moves.</p>
+        <div class="badges"><span class="badge">Simulated before you sign</span><span class="badge">One transaction</span><span class="badge">LP tokens in your wallet</span><span class="badge">Withdraw any time</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="wrap sec reveal" id="positions">
+    <div class="hd"><div><div class="eyebrow">Your positions</div><h2>Your divs, in one place.</h2><p>Every PumpSwap pool your wallet is in, what it's worth and what it earns a day. Positions added on pump.fun show up too.</p></div><button class="btn sm ghost" id="refreshPos" type="button" hidden>Refresh</button></div>
+    <div class="card" id="pos"></div>
+  </section>
+
+  <section class="wrap sec reveal" id="faq">
+    <div class="hd"><div><div class="eyebrow">FAQ</div><h2>Questions.</h2></div><div class="faqtools"><label class="search" style="min-width:260px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7a746a" stroke-width="2.2"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input id="fq" placeholder="Search the FAQ" autocomplete="off"></label></div></div>
+    <div class="faq stg" id="faqList">
+      <details class="card"><summary>Where do the divs come from?</summary><p>Every trade on a pump.fun pool pays a fee. Part of it stays inside the pool for the people who supply its liquidity. Add liquidity and you own a share of the pool, so you own that share of every fee it keeps.</p></details>
+      <details class="card"><summary>Can I lose money?</summary><p>Yes. Your position holds both SOL and the coin. If the coin's price falls, your position falls with it, partly offset by fees. If the coin goes to zero, so does the coin half. The receipt shows this at full size before you add.</p></details>
+      <details class="card"><summary>Does DIVZ hold my funds?</summary><p>No. DIVZ builds and simulates the transaction; your wallet signs it. The LP tokens go straight to your wallet, and you can withdraw on DIVZ, on pump.fun or anywhere PumpSwap works.</p></details>
+      <details class="card"><summary>What does it cost?</summary><p id="faqCost">The Solana network fee and the pool's normal trading fee on the part that gets swapped. Withdrawing is free apart from network fees.</p></details>
+      <details class="card"><summary>Which pools can I add to?</summary><p>Any pump.fun coin that has graduated to its PumpSwap pool paired with SOL. Coins still on the bonding curve have no pool yet. Paste any coin address in the search to look it up on-chain.</p></details>
+      <details class="card"><summary>Why do some pools pay more?</summary><p>Divs depend on how much trades through the pool compared with how big it is. A busy, small pool pays a higher rate. Pools above about 420 SOL market cap keep a bigger share of each fee for liquidity.</p></details>
+      <details class="card"><summary>Are the daily rates guaranteed?</summary><p>No. They are the last 24 hours of real trading. Volume changes every day, and fees fall when trading slows.</p></details>
+      <details class="card"><summary>How do I take my money out?</summary><p>Open the pool, choose Withdraw, pick how much, and get it back as SOL or as SOL plus the coin. It's one transaction your wallet signs.</p></details>
+    </div>
+    <div class="empty" id="fqNone" hidden>No question matches that. Try "lose", "fee" or "withdraw".</div>
+  </section>
+
+  <section class="wrap">
+    <div class="end-cta reveal"><div><h2>Make any coin<br>pay divs.</h2><p>Pick a pool, put in SOL, earn on every trade. Withdraw whenever you want.</p><a class="btn gold" href="#pools">Find a pool →</a></div><svg id="esvg" viewBox="0 0 300 260"></svg></div>
+  </section>
+</main>
+
+<div id="veil" hidden></div>
+<aside id="drawer" aria-hidden="true"><button id="dClose" type="button" aria-label="Close">×</button><div id="dIn"></div></aside>
+<div class="modal" id="wModal" hidden><div class="card"><button id="wClose" type="button" aria-label="Close">×</button><h3>Connect a wallet</h3><div id="wList"></div></div></div>
+<div id="toast"></div>
+<button id="totop" aria-label="Back to top"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#141414" stroke-width="2.4" stroke-linecap="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
+<script src="/js/divz.js?v=1"></script>
+</body>
+</html>

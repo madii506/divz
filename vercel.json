@@ -1,0 +1,9 @@
+{
+  "cleanUrls": true,
+  "rewrites": [{ "source": "/api/:path*", "destination": "/api/divz?__p=:path*" }],
+  "functions": { "api/divz.js": { "maxDuration": 30 } },
+  "headers": [
+    { "source": "/fonts/(.*)", "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }] },
+    { "source": "/(.*)", "headers": [{ "key": "X-Content-Type-Options", "value": "nosniff" }, { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" }] }
+  ]
+}
