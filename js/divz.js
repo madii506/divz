@@ -4,7 +4,7 @@
   const $ = (s, el = document) => el.querySelector(s);
   const $$ = (s, el = document) => [...el.querySelectorAll(s)];
   const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const S = { pools: [], sort: 'milk', min: 25, q: '', cfg: {}, pool: null, tab: 'add', slip: 2, pct: 100, toSol: true, busy: false, positions: null, updated: 0, amt: '', solUsd: 0 };
+  const S = { pools: [], stonk: [], all: [], venue: 'all', sort: 'milk', min: 25, q: '', cfg: {}, pool: null, tab: 'add', slip: 2, pct: 100, toSol: true, busy: false, positions: null, updated: 0, amt: '', solUsd: 0 };
   const store = { get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch (e) { } } };
 
   /* ---------- utils ---------- */
@@ -36,6 +36,7 @@
     return `<span class="${cls}">${letter}${img}</span>`;
   }
   const label = p => esc(p.symbol ? '$' + p.symbol : short(p.mint));
+  const vbadge = p => p.venue === 'stonkfun' ? '<span class="vb s">StonkFun</span>' : '<span class="vb">pump.fun</span>';
   const ease = t => t <= 0 ? 0 : t >= 1 ? 1 : t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
   const easeO = t => 1 - Math.pow(1 - Math.max(0, Math.min(1, t)), 3);
   const seg = (p, a, b) => Math.max(0, Math.min(1, (p - a) / (b - a)));
@@ -130,63 +131,60 @@
 
   /* ---------- pools board ---------- */
   const KEY = { milk: p => p.milkPerSolDay, tvl: p => p.tvlSol, vol: p => p.volSol, fee: p => p.lpBps * 1e6 + p.milkPerSolDay, chg: p => p.change24 };
-  function visible() { const q = S.q.trim().toLowerCase(); return S.pools.filter(p => p.tvlSol >= S.min && (!q || (p.name + ' ' + p.symbol + ' ' + p.mint).toLowerCase().includes(q))).sort((x, y) => KEY[S.sort](y) - KEY[S.sort](x)); }
+  function visible() { const q = S.q.trim().toLowerCase(); return S.all.filter(p => (S.venue === 'all' || p.venue === S.venue) && p.tvlSol >= S.min && (!q || (p.name + ' ' + p.symbol + ' ' + p.mint).toLowerCase().includes(q))).sort((x, y) => KEY[S.sort](y) - KEY[S.sort](x)); }
   function renderPools() {
     const rows = $('#rows'); const list = visible();
     if (!list.length) { rows.innerHTML = `<div class="empty"><b>${S.q ? 'No pool on the board matches that.' : 'No pools this size right now.'}</b>${S.q ? 'Paste the coin address in the search at the top to look it up on-chain.' : 'Try a smaller pool size.'}</div>`; return; }
     const top = Math.max(...list.map(p => p.milkPerSolDay), 1e-9);
     rows.innerHTML = list.map((p, i) => `
       <div class="tr row" data-pool="${esc(p.pool)}" style="animation-delay:${Math.min(i, 14) * 25}ms">
-        <span class="c-cow">${tokImg(p)}<span class="nm"><b>${esc(p.name || short(p.mint))}${p.tvlSol < 25 ? '<span class="tiny">small</span>' : ''}</b><small>${label(p)} · ${compact(p.mcapSol)} SOL mcap${p.created ? ' · ' + age(p.created) : ''}</small></span></span>
+        <span class="c-cow">${tokImg(p)}<span class="nm"><b>${esc(p.name || short(p.mint))}${vbadge(p)}</b><small>${label(p)}${p.venue === 'stonkfun' && p.quote ? ' · paired with ' + esc(p.quote) : ''} · ${compact(p.mcapSol)} SOL mcap${p.created ? ' · ' + age(p.created) : ''}</small></span></span>
         <span><span class="big num">${pctTxt(p.milkPerSolDay)}</span><span class="mbar"><i style="width:${Math.max(3, Math.round(p.milkPerSolDay / top * 100))}%"></i></span></span>
         <span class="num">${compact(p.tvlSol)} SOL</span><span class="num">${compact(p.volSol)} SOL</span><span class="num">${(p.lpBps / 100).toFixed(2)}%</span>
         <span class="num ${p.change24 >= 0 ? 'up' : 'down'}">${p.change24 >= 0 ? '+' : ''}${(+p.change24).toFixed(1)}%</span>
-        <span><button class="btn sm gold" type="button">Add</button></span>
+        <span><button class="btn sm ${p.venue === 'stonkfun' ? '' : 'gold'}" type="button">${p.venue === 'stonkfun' ? 'Open' : 'Add'}</button></span>
       </div>`).join('');
   }
   function countTo(el, to, fmt) { if (!el) return; const from = +(el.dataset.v || 0); el.dataset.v = to; if (RM) { el.innerHTML = fmt(to); return } whenReady(() => { const t0 = performance.now(); const f = n => { const k = Math.min(1, (n - t0) / 1400); el.innerHTML = fmt(from + (to - from) * easeO(k)); if (k < 1) requestAnimationFrame(f) }; requestAnimationFrame(f) }) }
   function renderStats() {
-    const P = S.pools; if (!P.length) return;
+    const P = S.all; if (!P.length) return;
     const vol = P.reduce((a, p) => a + p.volSol, 0), fees = P.reduce((a, p) => a + p.volSol * p.lpBps / 10000, 0), best = Math.max(...P.filter(p => p.tvlSol >= 25).map(p => p.milkPerSolDay), 0);
     const el = k => $(`#stats b[data-k="${k}"]`);
-    countTo(el('n'), P.length, n => Math.round(n)); countTo(el('vol'), vol, n => compact(n) + '<small>SOL</small>'); countTo(el('fees'), fees, n => fsol(n) + '<small>SOL</small>'); countTo(el('top'), best * 100, n => n.toFixed(2) + '<small>% / day</small>');
+    countTo(el('n'), P.length, n => Math.round(n)); countTo(el('vol'), vol, n => compact(n) + '<small>SOL</small>'); countTo(el('fees'), fees, n => compact(n) + '<small>SOL</small>'); countTo(el('top'), best * 100, n => n.toFixed(2) + '<small>% / day</small>');
+    for (const [id, v] of [['#vPump', 'pump'], ['#vStonk', 'stonkfun']]) {
+      const L = P.filter(p => p.venue === v), card = $(id); if (!card) continue;
+      const g = k => $(`b[data-k="${k}"]`, card);
+      countTo(g('n'), L.length, n => Math.round(n)); countTo(g('vol'), L.reduce((a, p) => a + p.volSol, 0), n => compact(n) + '<small>SOL</small>'); countTo(g('fees'), L.reduce((a, p) => a + p.volSol * p.lpBps / 10000, 0), n => compact(n) + '<small>SOL</small>');
+      const top = L.filter(p => p.tvlSol >= 25).sort((a, b) => b.milkPerSolDay - a.milkPerSolDay).slice(0, 4), mx = Math.max(...top.map(p => p.milkPerSolDay), 1e-9);
+      $('.vtop', card).innerHTML = top.length ? top.map(p => `<div class="vrow" data-pool="${esc(p.pool)}">${tokImg(p)}<b>${label(p)}${p.quote ? ' <span class="mut" style="font-weight:600">/ ' + esc(p.quote) + '</span>' : ''}</b><span class="mbar"><i style="width:${Math.max(4, Math.round(p.milkPerSolDay / mx * 100))}%"></i></span><em class="num">${pctTxt(p.milkPerSolDay)}</em></div>`).join('') : `<div class="empty">${v === 'stonkfun' ? 'StonkFun pools are loading or unavailable right now.' : 'No pools right now.'}</div>`;
+    }
   }
-  function renderTopPool() {
-    const box = $('#topPool');
-    const list = (S.pools.filter(p => p.tvlSol >= 50).length ? S.pools.filter(p => p.tvlSol >= 50) : S.pools).slice().sort((a, b) => b.milkPerSolDay - a.milkPerSolDay);
-    if (!list.length) { box.innerHTML = `<div class="empty"><b>The market is quiet.</b>No pool paid divs in the last 24h.</div>`; return; }
-    const p = list[0];
-    box.innerHTML = `<div class="tp-h">${tokImg(p, 'tok lg')}<div><small>Top pool right now</small><b>${esc(p.name || short(p.mint))} <span class="mut">${label(p)}</span></b></div></div>
-      <div class="tp-big"><b class="num">${pctTxt(p.milkPerSolDay)}</b><span>a day, last 24h pace</span></div>
-      <div class="tp-sub">1 SOL in this pool would have earned about <b>${fsol(p.milkPerSolDay)} SOL</b> in fees over the last 24 hours.</div>
-      <div class="tp-row num"><div><span>Pool size</span><b>${compact(p.tvlSol)} SOL</b></div><div><span>24h volume</span><b>${compact(p.volSol)} SOL</b></div><div><span>LP fee</span><b>${(p.lpBps / 100).toFixed(2)}%</b></div></div>
-      <button class="btn gold" style="width:100%" type="button" data-pool="${esc(p.pool)}">Add from SOL</button>`;
-  }
-  $('#topPool').addEventListener('click', e => { const b = e.target.closest('[data-pool]'); if (b) openPool(b.dataset.pool); });
   function renderTicker() {
-    const l = S.pools.slice().sort((a, b) => b.milkPerSolDay - a.milkPerSolDay).slice(0, 24); if (!l.length) return;
-    const html = l.map(p => `<a class="ti" href="#pools" data-pool="${esc(p.pool)}">${tokImg(p)}<b>${label(p)}</b><em>${pctTxt(p.milkPerSolDay)} / day</em><span>${compact(p.tvlSol)} SOL pool</span></a>`).join('');
+    const l = S.all.filter(p => p.tvlSol >= 25).sort((a, b) => b.milkPerSolDay - a.milkPerSolDay).slice(0, 26); if (!l.length) return;
+    const html = l.map(p => `<a class="ti" href="#pools" data-pool="${esc(p.pool)}">${tokImg(p)}<b>${label(p)}</b>${vbadge(p)}<em>${pctTxt(p.milkPerSolDay)} / day</em><span>${compact(p.tvlSol)} SOL pool</span></a>`).join('');
     const t = $('#tickerT'); t.innerHTML = html + html; t.style.animationDuration = (l.length * 3.4) + 's';
   }
   $('#tickerT').addEventListener('click', e => { const a = e.target.closest('[data-pool]'); if (a) { e.preventDefault(); openPool(a.dataset.pool); } });
-  function tickUpdated() { const el = $('#updated span'); if (!S.updated) return; const s = Math.round((Date.now() - S.updated) / 1000); el.textContent = 'Live · updated ' + (s < 5 ? 'just now' : s < 60 ? s + 's ago' : Math.round(s / 60) + 'm ago'); }
+  function tickUpdated() { const el = $('#updated span'); if (!S.updated) return; const s = Math.round((Date.now() - S.updated) / 1000); el.textContent = 'Scanning pump.fun + StonkFun · ' + (s < 5 ? 'just now' : s < 60 ? s + 's ago' : Math.round(s / 60) + 'm ago'); }
   setInterval(tickUpdated, 1000);
   async function loadPools(quiet) {
     if (!quiet) $('#rows').innerHTML = '<div style="padding:8px 16px">' + '<div class="skel"></div>'.repeat(6) + '</div>';
-    try {
-      const j = await api('pools');
-      S.pools = j.pools || []; S.updated = j.updated || Date.now(); S.solUsd = j.solUsd || S.solUsd;
-      renderPools(); renderStats(); renderTopPool(); renderTicker(); rcInit(); story.data(); tickUpdated();
-    } catch (e) {
+    const [a, b] = await Promise.allSettled([api('pools'), api('stonk')]);
+    if (a.status === 'fulfilled') { const j = a.value; S.pools = (j.pools || []).map(p => ({ ...p, venue: 'pump' })); S.updated = j.updated || Date.now(); S.solUsd = j.solUsd || S.solUsd; }
+    if (b.status === 'fulfilled') { S.stonk = (b.value.pools || []).map(p => ({ ...p, venue: 'stonkfun' })); if (!S.solUsd) S.solUsd = b.value.solUsd || 0; }
+    S.all = [...S.pools, ...S.stonk];
+    if (!S.all.length) {
       if (quiet) return;
       $('#rows').innerHTML = `<div class="empty"><b>Could not reach the market.</b><button class="btn sm" id="retry" type="button" style="margin-top:10px">Retry</button></div>`;
-      $('#retry').onclick = () => loadPools(); $('#updated span').textContent = 'Offline';
-      $('#topPool').innerHTML = `<div class="empty"><b>Could not reach the market.</b>Refresh in a moment.</div>`;
+      $('#retry').onclick = () => loadPools(); $('#updated span').textContent = 'Offline'; return;
     }
+    renderPools(); renderStats(); renderTicker(); rcInit(); story.data(); mach.data(); tickUpdated();
   }
   setInterval(() => { if (!document.hidden && !S.busy) loadPools(true); }, 60000);
   $('#rows').addEventListener('click', e => { const r = e.target.closest('.row'); if (r) openPool(r.dataset.pool); });
   $('#th').addEventListener('click', e => { const b = e.target.closest('.sort'); if (!b) return; S.sort = b.dataset.s; $$('#th .sort').forEach(x => x.classList.toggle('on', x === b)); renderPools(); });
+  $('#venue').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; S.venue = b.dataset.v; $$('#venue button').forEach(x => x.classList.toggle('on', x === b)); renderPools(); });
+  $('#venues').addEventListener('click', e => { const r = e.target.closest('.vrow'); if (r) { openPool(r.dataset.pool); return; } const b = e.target.closest('[data-venue]'); if (!b) return; S.venue = b.dataset.venue; $$('#venue button').forEach(x => x.classList.toggle('on', x.dataset.v === S.venue)); renderPools(); $('#pools').scrollIntoView({ behavior: 'smooth' }); });
   $('#size').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; S.min = +b.dataset.m; $$('#size button').forEach(x => x.classList.toggle('on', x === b)); renderPools(); });
   $('#q').addEventListener('input', e => { S.q = e.target.value; renderPools(); });
   $('#find').addEventListener('submit', e => { e.preventDefault(); const v = $('#findIn').value.trim(); if (!v) return; if (isAddr(v)) { openPool(v); return; } S.q = v; $('#q').value = v; S.min = 0; $$('#size button').forEach(x => x.classList.toggle('on', x.dataset.m === '0')); renderPools(); $('#pools').scrollIntoView({ behavior: 'smooth' }); });
@@ -198,9 +196,23 @@
   $('#dClose').addEventListener('click', closeDrawer); $('#veil').addEventListener('click', closeDrawer);
   document.addEventListener('keydown', e => { if (e.key === 'Escape') { if (!$('#wModal').hidden) $('#wModal').hidden = true; else if (S.pool) closeDrawer(); } });
   async function openPool(id, quiet, tab, amt) {
+    const sf = S.stonk.find(x => x.pool === id);
+    if (sf) { S.pool = sf; renderStonk(sf); openDrawer(); return; }
     if (!quiet) { S.pool = { pool: id, loading: true }; S.tab = tab || 'add'; S.amt = amt || ''; renderDrawer(); openDrawer(); }
     try { const j = await api('pool?id=' + encodeURIComponent(id) + (W.acct ? '&user=' + W.acct.address : '')); if (S.pool && (S.pool.pool === id || S.pool.mint === id || S.pool.pool === j.pool.pool || quiet)) { S.pool = j.pool; if (j.pool.solUsd) S.solUsd = j.pool.solUsd; renderDrawer(); } }
     catch (e) { if (!quiet) { S.pool = { pool: id, error: e.message }; renderDrawer(); } }
+  }
+  function renderStonk(p) {
+    const el = $('#dIn'), sym = p.symbol ? '$' + p.symbol : 'the coin';
+    const rows = [[-75, 0.25], [-50, 0.5], [100, 2], [300, 4]].map(([pc, r]) => { const v = Math.sqrt(r) - 1; return `<tr><td>${esc(sym)} ${pc > 0 ? '+' : ''}${pc}%</td><td class="${v >= 0 ? 'up' : 'down'}">${v >= 0 ? '+' : ''}${(v * 100).toFixed(0)}%</td></tr>`; }).join('');
+    el.innerHTML = `
+      <div class="d-top">${tokImg(p, 'tok lg')}<div><h3>${esc(p.name || short(p.mint))} <span class="vb s">StonkFun</span></h3><small>${esc(sym)} · ${esc(p.pair || '')} on Raydium · <a href="${esc(p.sfUrl)}" target="_blank" rel="noopener">StonkFun page</a> · <a href="https://dexscreener.com/solana/${esc(p.pool)}" target="_blank" rel="noopener">chart</a></small></div></div>
+      <div class="kv num"><div><span>Divs / day</span><b>${pctTxt(p.milkPerSolDay)}</b></div><div><span>Fee APR, 24h</span><b>${(p.apr * 100).toFixed(0)}%</b></div><div><span>Pool size</span><b>$${compact(p.tvlUsd)}</b></div><div><span>24h volume</span><b>$${compact(p.volUsd)}</b></div></div>
+      <p class="feeline">This pool pays its liquidity about <b>${(p.lpBps / 100).toFixed(2)}% of every trade</b>, from a ${((p.feeRate || 0) * 100).toFixed(2)}% trading fee. Paired with <b>${esc(p.quote || '')}</b>, so you add both ${esc(sym)} and ${esc(p.quote || 'the pair')}.</p>
+      <div class="sf-note">One-click add from SOL is for pump.fun pools for now. StonkFun pools live on Raydium: add there with the same wallet, and the position stays in your wallet.</div>
+      ${p.poolType === 'Standard' ? `<div class="sim"><p><b>If ${esc(sym)}'s price moves</b> against ${esc(p.quote || 'its pair')}, your position changes like this, before fees:</p><table><tr><th>Price move</th><th>Position</th></tr>${rows}</table></div>` : ''}
+      <a class="btn gold go" href="${esc(p.addUrl)}" target="_blank" rel="noopener">Add on Raydium →</a>
+      <p class="fine">Rates are Raydium's 24h fee APR for this pool. Past pace, not a promise.</p>`;
   }
   function estimate(p, solIn) {
     try {
@@ -327,13 +339,13 @@
   const RC = { p: null, init: false };
   const rcSolAt = v => { const x = 0.05 * Math.pow(2000, v / 100); return x < 1 ? Math.round(x * 100) / 100 : x < 10 ? Math.round(x * 10) / 10 : Math.round(x); };
   function rcInit() {
-    const base = S.pools.filter(p => p.tvlSol >= 50 && p.volSol > 0).sort((a, b) => b.milkPerSolDay - a.milkPerSolDay).slice(0, 6);
-    const list = base.length ? base : S.pools.slice(0, 6); if (!list.length) return;
+    const top3 = L => L.filter(p => p.tvlSol >= 50 && p.volSol > 0).sort((a, b) => b.milkPerSolDay - a.milkPerSolDay).slice(0, 4); const base = [...top3(S.pools), ...top3(S.stonk)];
+    const list = base.length ? base : S.all.slice(0, 6); if (!list.length) return;
     if (!RC.p || !list.some(x => x.pool === RC.p.pool)) RC.p = list[0];
-    $('#rcPick').innerHTML = list.map(p => `<button type="button" data-pool="${esc(p.pool)}" class="${p.pool === RC.p.pool ? 'on' : ''}">${tokImg(p)}${label(p)}</button>`).join('');
+    $('#rcPick').innerHTML = list.map(p => `<button type="button" data-pool="${esc(p.pool)}" class="${p.pool === RC.p.pool ? 'on' : ''}">${tokImg(p)}${label(p)}<span class="vb ${p.venue === 'stonkfun' ? 's' : ''}" style="margin-left:2px">${p.venue === 'stonkfun' ? 'SF' : 'pump'}</span></button>`).join('');
     if (!RC.init) {
       RC.init = true;
-      $('#rcPick').onclick = e => { const b = e.target.closest('button'); if (!b) return; RC.p = S.pools.find(x => x.pool === b.dataset.pool); $$('#rcPick button').forEach(x => x.classList.toggle('on', x === b)); rcPaint(true); };
+      $('#rcPick').onclick = e => { const b = e.target.closest('button'); if (!b) return; RC.p = S.all.find(x => x.pool === b.dataset.pool); $$('#rcPick button').forEach(x => x.classList.toggle('on', x === b)); rcPaint(true); };
       ['#rcSol', '#rcDays', '#rcMove'].forEach(id => $(id).addEventListener('input', () => rcPaint()));
       $('#rcGo').onclick = () => RC.p && openPool(RC.p.pool, false, 'add', String(rcSolAt(+$('#rcSol').value)));
     }
@@ -347,7 +359,7 @@
     const fees = V * p.milkPerSolDay * days, il = V * Math.sqrt(r) - V, net = fees + il, hold = V * (1 + r) / 2 - V, vs = net - hold;
     const set = (id, n) => { const el = $(id); el.innerHTML = `${sgn(n)} SOL <small class="mut" style="font-size:13px;font-weight:600;letter-spacing:0">${usd(n)}</small>`; el.className = 'num ' + (n >= 0 ? 'up' : 'dn'); };
     set('#rcFees', fees); set('#rcIl', il); set('#rcNet', net); set('#rcVs', vs);
-    $('#rcPool').textContent = (p.symbol ? '$' + p.symbol : short(p.mint)) + ' · ' + pctTxt(p.milkPerSolDay) + '/day';
+    $('#rcPool').textContent = (p.symbol ? '$' + p.symbol : short(p.mint)) + (p.venue === 'stonkfun' ? ' · StonkFun' : ' · pump.fun') + ' · ' + pctTxt(p.milkPerSolDay) + '/day';
     if (bump) { const el = $('#rcPaper'); el.animate([{ transform: 'translateY(-6px) rotate(-.4deg)' }, { transform: 'none' }], { duration: 380, easing: 'cubic-bezier(.2,.7,.2,1)' }); }
     // curve: LP (with fees) vs hold, across price moves
     const X = q => 40 + (q - 0.1) / 3.9 * 460, vals = [];
@@ -411,31 +423,56 @@
     const t0 = performance.now(), END = 2.9; const f = n => { const T = (n - t0) / 1000; draw(T); if (T < END) requestAnimationFrame(f); else done(); }; requestAnimationFrame(f); setTimeout(done, END * 1000 + 1500);
   }
 
-  /* ---------- hero machine: trades flow in, divs drop into the bowl ---------- */
-  function machine() {
-    const svg = $('#msvg');
-    const N = 5, GAP = 84, TRACK = 112;
-    const CH = Array.from({ length: N }, (_, i) => `<g class="mc"><rect x="-34" y="-15" width="68" height="30" rx="15" fill="${i % 3 === 1 ? '#3a2422' : '#22301f'}" stroke="${i % 3 === 1 ? '#e2867f' : '#7fcf9a'}" stroke-width="1.5"/><text y="5" text-anchor="middle" font-size="12" font-weight="800" font-family="Sora" fill="${i % 3 === 1 ? '#e2867f' : '#7fcf9a'}">${i % 3 === 1 ? 'SELL' : 'BUY'}</text></g>`).join('');
-    const CO = Array.from({ length: N }, () => `<circle class="mco" r="9" fill="url(#gold)" opacity="0"/>`).join('');
-    svg.innerHTML = `<defs><pattern id="mg" width="28" height="28" patternUnits="userSpaceOnUse"><path d="M28 0H0V28" fill="none" stroke="#262420" stroke-width="1"/></pattern><clipPath id="bowlClip"><path d="M345,170 A90,90 0 0 0 525,170 Z"/></clipPath></defs>
-      <rect width="560" height="360" fill="url(#mg)"/><path d="M10,${TRACK} H330" stroke="#3a372f" stroke-width="2" stroke-dasharray="6 8"/>
-      ${CH}${CO}
-      <path d="M345,170 A90,90 0 0 0 525,170 Z" fill="#26231d"/><g clip-path="url(#bowlClip)"><rect id="mFill" x="345" y="260" width="180" height="100" fill="url(#gold)"/><path id="mWave" fill="#FBE7A1" opacity=".55"/></g>
-      <path d="M345,170 A90,90 0 0 0 525,170" fill="none" stroke="#F2EEE3" stroke-width="3"/><line x1="337" y1="170" x2="533" y2="170" stroke="#F2EEE3" stroke-width="3" stroke-linecap="round"/>`;
-    const chips = $$('.mc', svg), coins = $$('.mco', svg), fill = $('#mFill'), wave = $('#mWave');
-    let vis = true; new IntersectionObserver(e => { vis = e[0].isIntersecting }).observe(svg);
-    const t0 = performance.now(), period = 1.25, span = N * GAP;
-    const f = now => {
-      requestAnimationFrame(f); if (!vis || document.hidden) return;
-      const T = (now - t0) / 1000;
-      chips.forEach((c, i) => { const x = -50 + ((T / period * GAP + i * GAP) % span) * (380 / span); c.setAttribute('transform', `translate(${x.toFixed(1)},${TRACK})`); c.style.opacity = x < 280 ? Math.min(1, (x + 50) / 40) : Math.max(0, 1 - (x - 280) / 40); });
-      coins.forEach((c, i) => { const x = -50 + ((T / period * GAP + i * GAP) % span) * (380 / span); const d = (x - 285) / 45; if (d < 0 || d > 1) { c.setAttribute('opacity', 0); return; } const cx = 300 + d * 135, cy = TRACK - Math.sin(d * Math.PI) * 30 + d * d * 95; c.setAttribute('cx', cx.toFixed(1)); c.setAttribute('cy', cy.toFixed(1)); c.setAttribute('opacity', d < .85 ? 1 : (1 - d) / .15); });
-      const lvl = 0.25 + ((T % 24) / 24) * .62, y = 260 - lvl * 90;
-      fill.setAttribute('y', y.toFixed(1));
-      let d = `M345,${y.toFixed(1)}`; for (let x = 345; x <= 525; x += 10) d += ` L${x},${(y + Math.sin(x / 18 + T * 3) * 3).toFixed(1)}`; d += ' L525,270 L345,270 Z'; wave.setAttribute('d', d);
-    };
-    requestAnimationFrame(f);
-  }
+  /* ---------- hero machine: two launchpads' trades flow in, divs drop into the bowl ---------- */
+  const mach = (() => {
+    const N = 4, GAP = 92, TR = [{ y: 112, v: 'pump', lab: 'pump.fun', col: '#E8B23A' }, { y: 196, v: 'stonkfun', lab: 'StonkFun', col: '#F2EEE3' }];
+    const BX = 430, BY = 300, BR = 92;
+    let syms = { pump: [], stonkfun: [] }, paid = 0, built = false;
+    function build() {
+      const svg = $('#msvg'); built = true;
+      let chips = '';
+      TR.forEach((t, k) => { for (let i = 0; i < N; i++) chips += `<g class="mc" data-t="${k}" data-i="${i}"><rect x="-42" y="-15" width="84" height="30" rx="15" fill="#1d1b17" stroke="${t.col}" stroke-opacity=".8" stroke-width="1.5"/><text y="5" text-anchor="middle" font-size="12" font-weight="800" font-family="Sora" fill="${t.col}">BUY</text></g><circle class="mco" data-t="${k}" data-i="${i}" r="8.5" fill="url(#gold)" opacity="0"/>`; });
+      svg.innerHTML = `<defs><pattern id="mg" width="28" height="28" patternUnits="userSpaceOnUse"><path d="M28 0H0V28" fill="none" stroke="#262420" stroke-width="1"/></pattern><clipPath id="bowlClip"><path d="M${BX - BR},${BY} A${BR},${BR} 0 0 0 ${BX + BR},${BY} Z"/></clipPath>
+        <linearGradient id="sweep" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#E8B23A" stop-opacity="0"/><stop offset=".85" stop-color="#E8B23A" stop-opacity=".16"/><stop offset="1" stop-color="#FBE7A1" stop-opacity=".7"/></linearGradient></defs>
+        <rect width="560" height="470" fill="url(#mg)"/><rect id="mSweep" x="-120" y="0" width="120" height="470" fill="url(#sweep)"/>
+        ${TR.map(t => `<text x="20" y="${t.y - 26}" font-size="11.5" font-weight="800" letter-spacing="1.5" font-family="Sora" fill="${t.col}" opacity=".85">${t.lab.toUpperCase()}</text><path d="M14,${t.y} H312" stroke="#3a372f" stroke-width="2" stroke-dasharray="6 8"/>`).join('')}
+        ${chips}
+        <path d="M${BX - BR},${BY} A${BR},${BR} 0 0 0 ${BX + BR},${BY} Z" fill="#26231d"/><g clip-path="url(#bowlClip)"><rect id="mFill" x="${BX - BR}" y="${BY + BR}" width="${2 * BR}" height="${BR + 10}" fill="url(#gold)"/><path id="mWave" fill="#FBE7A1" opacity=".55"/></g>
+        <path d="M${BX - BR},${BY} A${BR},${BR} 0 0 0 ${BX + BR},${BY}" fill="none" stroke="#F2EEE3" stroke-width="3"/><line x1="${BX - BR - 8}" y1="${BY}" x2="${BX + BR + 8}" y2="${BY}" stroke="#F2EEE3" stroke-width="3" stroke-linecap="round"/>
+        <text id="mPaid" x="${BX}" y="${BY + BR + 34}" text-anchor="middle" font-size="13" font-weight="800" font-family="Sora" fill="#F2EEE3"> </text><text x="${BX}" y="${BY + BR + 52}" text-anchor="middle" font-size="11" font-weight="600" font-family="Sora" fill="#8d877a">paid to liquidity, last 24h</text>`;
+      const chipsEl = $$('.mc', svg), coins = $$('.mco', svg), fill = $('#mFill'), wave = $('#mWave'), sweep = $('#mSweep');
+      let vis = true; new IntersectionObserver(e => { vis = e[0].isIntersecting }).observe(svg);
+      const t0 = performance.now(), period = 1.3, span = N * GAP, lastLap = {};
+      const f = now => {
+        requestAnimationFrame(f); if (!vis || document.hidden) return;
+        const T = (now - t0) / 1000;
+        chipsEl.forEach(c => {
+          const k = +c.dataset.t, i = +c.dataset.i, tr = TR[k], ph = T / period * GAP + i * GAP + k * 46, lap = Math.floor(ph / span), x = -50 + (ph % span) * (380 / span);
+          const key = k + ':' + i; if (lastLap[key] !== lap) { lastLap[key] = lap; const L = syms[tr.v]; const tx = $('text', c); tx.textContent = L.length ? L[(lap * N + i) % L.length] : (i % 3 === 1 ? 'SELL' : 'BUY'); }
+          c.setAttribute('transform', `translate(${x.toFixed(1)},${tr.y})`); c.style.opacity = x < 270 ? Math.min(1, (x + 50) / 40) : Math.max(0, 1 - (x - 270) / 40);
+        });
+        coins.forEach(c => {
+          const k = +c.dataset.t, i = +c.dataset.i, tr = TR[k], ph = T / period * GAP + i * GAP + k * 46, x = -50 + (ph % span) * (380 / span), d = (x - 275) / 45;
+          if (d < 0 || d > 1) { c.setAttribute('opacity', 0); return; }
+          const sx = 300, sy = tr.y, ex = BX - 20 + k * 40, ey = BY + 30;
+          const cx = sx + (ex - sx) * d, cy = sy + (ey - sy) * d * d - Math.sin(d * Math.PI) * 34;
+          c.setAttribute('cx', cx.toFixed(1)); c.setAttribute('cy', cy.toFixed(1)); c.setAttribute('opacity', d < .85 ? 1 : ((1 - d) / .15).toFixed(2));
+        });
+        const lvl = 0.22 + ((T % 26) / 26) * .66, y = BY + BR - lvl * BR;
+        fill.setAttribute('y', y.toFixed(1));
+        let d = `M${BX - BR},${y.toFixed(1)}`; for (let x = BX - BR; x <= BX + BR; x += 9) d += ` L${x},${(y + Math.sin(x / 16 + T * 3) * 3).toFixed(1)}`; d += ` L${BX + BR},${BY + BR + 10} L${BX - BR},${BY + BR + 10} Z`; wave.setAttribute('d', d);
+        sweep.setAttribute('x', (((T % 4.5) / 4.5) * 720 - 140).toFixed(1));
+      };
+      requestAnimationFrame(f);
+    }
+    function data() {
+      const pick = L => L.filter(p => p.tvlSol >= 25 && p.symbol).sort((a, b) => b.volSol - a.volSol).slice(0, 12).map(p => '$' + String(p.symbol).slice(0, 7));
+      syms = { pump: pick(S.pools), stonkfun: pick(S.stonk) };
+      paid = S.all.reduce((a, p) => a + p.volSol * p.lpBps / 10000, 0);
+      const el = $('#mPaid'); if (el) countTo(el, paid, n => compact(n) + ' SOL');
+    }
+    return { init: build, data };
+  })();
 
   /* ---------- pinned story ---------- */
   const story = (() => {
@@ -451,8 +488,8 @@
         <path d="M220,250 A100,100 0 0 0 420,250 Z" fill="#26231d"/><g clip-path="url(#sbc)"><rect id="sFill" x="220" y="350" width="200" height="110" fill="url(#gold)"/><rect id="sYou" x="300" y="350" width="40" height="110" fill="#F2EEE3" opacity="0"/></g>
         <path d="M220,250 A100,100 0 0 0 420,250" fill="none" stroke="#F2EEE3" stroke-width="3"/><line x1="210" y1="250" x2="430" y2="250" stroke="#F2EEE3" stroke-width="3" stroke-linecap="round"/>
         <g id="sDrops">${Array.from({ length: 6 }, () => '<circle r="8" fill="url(#gold)" opacity="0"/>').join('')}</g>
-        <g id="sWallet" opacity="0"><rect x="470" y="300" width="130" height="86" rx="16" fill="#F2EEE3"/><rect x="470" y="300" width="130" height="24" rx="12" fill="#E8B23A"/><text x="535" y="355" text-anchor="middle" fill="#141414" font-size="13" font-weight="800" font-family="Sora">your wallet</text><text id="sWv" x="535" y="374" text-anchor="middle" fill="#141414" font-size="12" font-weight="700" font-family="Sora"> </text></g>
-        <path id="sArrow" d="M420,320 C450,330 455,345 468,345" fill="none" stroke="#E8B23A" stroke-width="3" stroke-dasharray="6 6" opacity="0"/>`;
+        <g id="sWallet" opacity="0"><rect x="455" y="300" width="164" height="86" rx="16" fill="#F2EEE3"/><rect x="455" y="300" width="164" height="24" rx="12" fill="#E8B23A"/><text x="537" y="355" text-anchor="middle" fill="#141414" font-size="13" font-weight="800" font-family="Sora">your wallet</text><text id="sWv" x="537" y="374" text-anchor="middle" fill="#141414" font-size="12" font-weight="700" font-family="Sora"> </text></g>
+        <path id="sArrow" d="M420,320 C440,330 445,345 453,345" fill="none" stroke="#E8B23A" stroke-width="3" stroke-dasharray="6 6" opacity="0"/>`;
     }
     function data() {
       top = S.pools.filter(x => x.tvlSol >= 50 && x.volSol > 0).sort((a, b) => b.volSol - a.volSol)[0] || S.pools[0] || null;
@@ -508,7 +545,7 @@
 
   /* ---------- boot ---------- */
   async function boot() {
-    intro(); machine(); story.init(); ocInit(); faqInit(); endCard(); splitWords(); reveals(); renderPositions();
+    intro(); mach.init(); story.init(); ocInit(); faqInit(); endCard(); splitWords(); reveals(); renderPositions();
     addEventListener('scroll', onScroll, { passive: true }); addEventListener('resize', onScroll); onScroll();
     $('#totop').onclick = () => scrollTo({ top: 0, behavior: 'smooth' });
     try { const c = await api('config'); S.cfg = c; if (c.feeBps) $('#faqCost').textContent = `A ${(c.feeBps / 100).toFixed(1)}% service fee on what you add, the Solana network fee, and the pool's normal trading fee on the part that gets swapped. Withdrawing is free apart from network fees.`; else $('#faqCost').textContent = 'DIVZ takes no fee. You pay the Solana network fee and the pool\'s normal trading fee on the part that gets swapped. Withdrawing is free apart from network fees.';
