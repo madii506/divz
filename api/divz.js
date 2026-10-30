@@ -595,7 +595,7 @@ async function stonkPools() {
             venue: 'stonkfun', pool: p.id, mint: t.mint, name: t.name || t.symbol, symbol: t.symbol, image: t.imageUrl ? (t.imageUrl.startsWith('http') ? t.imageUrl : 'https://www.stonkfun.xyz' + t.imageUrl) : '',
             quote: t.quote ? t.quote.symbol : '', pair: (p.mintA.symbol || '?') + '/' + (p.mintB.symbol || '?'), poolType: p.type, feeRate: p.feeRate,
             tvlUsd: p.tvl, volUsd: vol, tvlSol: solUsd ? p.tvl / solUsd : 0, volSol: solUsd ? vol / solUsd : 0,
-            milkPerSolDay: apr / 100 / 365, apr: apr / 100, lpBps: vol > 0 ? Math.round(apr / 100 / 365 * p.tvl / vol * 1e4 * 10) / 10 : Math.round((p.feeRate || 0) * 1e4),
+            milkPerSolDay: apr / 100 / 365, apr: apr / 100, lpBps: Math.min(Math.round((p.feeRate || 0) * 1e4 * 10) / 10, vol > 0 ? Math.round(apr / 100 / 365 * p.tvl / vol * 1e4 * 10) / 10 : Infinity),
             mcapSol: solUsd && m.marketCapUsd ? m.marketCapUsd / solUsd : 0, change24: m.priceChange24h || 0, created: t.createdAt ? Date.parse(t.createdAt) : null,
             addUrl: 'https://raydium.io/liquidity/increase/?mode=add&pool_id=' + p.id, sfUrl: 'https://www.stonkfun.xyz/token/' + t.mint,
           });
